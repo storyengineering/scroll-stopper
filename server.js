@@ -9,6 +9,8 @@ const r2 = require('./r2');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+console.log('R2 configured:', !!process.env.R2_ACCOUNT_ID);
+
 // Local uploads dir as fallback when R2 is not configured
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
