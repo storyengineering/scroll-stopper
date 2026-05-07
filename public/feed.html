@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <title>Scroll Stopper — S.E. Media</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📱</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent: #1B5EFF;
+    }
+
+    html, body {
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+      font-family: 'Space Mono', 'Courier New', monospace;
+      color: #fff;
+      touch-action: pan-y;
+    }
+
+    /* ── Tap-to-start overlay ── */
+    #tap-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      text-align: center;
+    }
+
+    #tap-overlay .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 32px;
+    }
+
+    #tap-overlay h1 {
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+
+    #tap-overlay p {
+      color: #666;
+      font-size: 13px;
+      line-height: 1.6;
+      max-width: 260px;
+      margin-bottom: 40px;
+      letter-spacing: 0.3px;
+    }
+
+    #start-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 0;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 16px 48px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    #start-btn:active { transform: scale(0.96); }
+    #start-btn:hover { opacity: 0.88; }
+
+    #tap-overlay .hint {
+      margin-top: 20px;
+      font-size: 11px;
+      color: #333;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Loading state ── */
+    #loading {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: #000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid #222;
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Feed container ── */
+    #feed {
+      height: 100dvh;
+      height: 100vh;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    #feed::-webkit-scrollbar { display: none; }
+
+    /* ── Individual video item ── */
+    .video-item {
+      width: 100%;
+      height: 100dvh;
+      height: 100vh;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      position: relative;
+      background: #000;
+      flex-shrink: 0;
+    }
+
+    .video-item video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    /* ── Skeleton shimmer while metadata loads ── */
+    .video-item.loading-skeleton {
+      background: #111;
+    }
+
+    .video-item.loading-skeleton::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+    }
+
+    @keyframes shimmer {
+      0%   { background-position: -200% 0; }
+      100% { background-position:  200% 0; }
+    }
+
+    /* ── Bottom gradient + hint ── */
+    .video-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 60px 20px 32px;
+      background: linear-gradient(transparent, rgba(0,0,0,0.55));
+      pointer-events: none;
+    }
+
+    .swipe-hint {
+      text-align: center;
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Mute button ── */
+    .mute-btn {
+      position: absolute;
+      top: 20px;
+      right: 16px;
+      background: rgba(0,0,0,0.5);
+      border: none;
+      color: #fff;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 10;
+    }
+
+    .mute-btn:active { background: rgba(0,0,0,0.7); }
+
+    /* ── Error state ── */
+    #error {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      text-align: center;
+      padding: 32px;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    #error h2 { font-size: 20px; }
+    #error p { color: #666; font-size: 14px; }
+
+    /* ── "No more videos" end card ── */
+    .end-card {
+      height: 100dvh;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      scroll-snap-align: start;
+      gap: 12px;
+    }
+
+    .end-card .icon { font-size: 40px; }
+    .end-card h2 { font-size: 20px; font-weight: 700; }
+    .end-card p { font-size: 14px; color: #666; text-align: center; max-width: 260px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+
+  <!-- Start screen -->
+  <div id="tap-overlay">
+    <div class="logo">
+      <span style="font-size:20px;line-height:1">👀</span>
+      S.E. Media · Scroll Stopper
+    </div>
+    <h1>Scroll like you mean it.</h1>
+    <p>Swipe through videos naturally. Your gut reaction is what matters.</p>
+    <button id="start-btn">Start Scrolling</button>
+    <p class="hint">Videos autoplay with sound · Tap to mute</p>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading">
+    <div class="spinner"></div>
+    <p style="color:#555;font-size:14px">Loading videos…</p>
+  </div>
+
+  <!-- Error -->
+  <div id="error">
+    <h2>Couldn't load feed</h2>
+    <p id="error-msg">Check the link and try again.</p>
+  </div>
+
+  <!-- Feed -->
+  <div id="feed"></div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const sessionId = params.get('session');
+
+    // Stable viewer ID per browser session
+    let viewerId = sessionStorage.getItem('ss_viewer');
+    if (!viewerId) {
+      viewerId = crypto.randomUUID ? crypto.randomUUID() :
+        Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2,'0')).join('');
+      sessionStorage.setItem('ss_viewer', viewerId);
+    }
+
+    let isMuted = false;
+    let watchData = {}; // videoId → { startTime, sent, position }
+    let observer = null;
+    let videoBaseUrl = '/uploads'; // overridden by /api/config
+
+    // ── Start button ────────────────────────────────────────────────────────────
+
+    document.getElementById('start-btn').addEventListener('click', async () => {
+      if (!sessionId) return showError('No session ID in URL.');
+
+      document.getElementById('tap-overlay').style.display = 'none';
+      document.getElementById('loading').style.display = 'flex';
+
+      try {
+        const configRes = await fetch('/api/config');
+        const config = await configRes.json();
+        videoBaseUrl = config.videoBaseUrl;
+
+        const res = await fetch(`/api/sessions/${sessionId}`);
+        if (!res.ok) return showError('Session not found.');
+        const session = await res.json();
+
+        const { videos } = session;
+        if (!videos.length) return showError('No videos in this session yet.');
+
+        const shuffled = buildPlaylist(videos);
+        const withDimensions = await preloadDimensions(shuffled);
+        renderFeed(withDimensions);
+        setupObserver();
+        document.getElementById('loading').style.display = 'none';
+      } catch (e) {
+        showError('Could not connect to server.');
+      }
+    });
+
+    // ── Playlist builder ─────────────────────────────────────────────────────
+
+    function buildPlaylist(videos) {
+      const benchmarks = videos.filter(v => !v.is_test_video);
+      const testVideos = videos.filter(v => v.is_test_video);
+
+      // Fisher-Yates shuffle
+      for (let i = benchmarks.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [benchmarks[i], benchmarks[j]] = [benchmarks[j], benchmarks[i]];
+      }
+
+      // Insert each test video at a random position (not first)
+      const merged = [...benchmarks];
+      testVideos.forEach(tv => {
+        const min = Math.min(1, merged.length); // prefer not position 0
+        const pos = min + Math.floor(Math.random() * (merged.length - min + 1));
+        merged.splice(pos, 0, tv);
+      });
+
+      return merged;
+    }
+
+    // ── Metadata preloader ───────────────────────────────────────────────────
+
+    function preloadDimensions(videos) {
+      return Promise.all(videos.map(video => new Promise(resolve => {
+        const el = document.createElement('video');
+        el.preload = 'metadata';
+        el.src = `${videoBaseUrl}/${video.filename}`;
+        el.addEventListener('loadedmetadata', () => {
+          resolve({ ...video, _w: el.videoWidth || 9, _h: el.videoHeight || 16 });
+        }, { once: true });
+        el.addEventListener('error', () => {
+          resolve({ ...video, _w: 9, _h: 16 }); // safe fallback: assume vertical
+        }, { once: true });
+      })));
+    }
+
+    // ── Feed rendering ───────────────────────────────────────────────────────
+
+    function renderFeed(videos) {
+      const feed = document.getElementById('feed');
+      feed.innerHTML = '';
+
+      videos.forEach((video, index) => {
+        const item = document.createElement('div');
+        item.className = 'video-item';
+        item.dataset.videoId = video.id;
+        item.dataset.position = index;
+
+        const videoEl = document.createElement('video');
+        videoEl.src = `${videoBaseUrl}/${video.filename}`;
+        videoEl.loop = true;
+        videoEl.muted = isMuted;
+        videoEl.playsInline = true;
+        videoEl.preload = index < 3 ? 'auto' : 'metadata';
+        videoEl.setAttribute('playsinline', '');
+        videoEl.setAttribute('webkit-playsinline', '');
+
+        const overlay = document.createElement('div');
+        overlay.className = 'video-overlay';
+        overlay.innerHTML = `<div class="swipe-hint">↑ swipe</div>`;
+
+        const muteBtn = document.createElement('button');
+        muteBtn.className = 'mute-btn';
+        muteBtn.setAttribute('aria-label', 'Toggle mute');
+        muteBtn.innerHTML = muteIcon();
+        muteBtn.addEventListener('click', toggleMute);
+
+        item.appendChild(videoEl);
+        item.appendChild(overlay);
+        item.appendChild(muteBtn);
+        feed.appendChild(item);
+      });
+
+      // End card
+      const end = document.createElement('div');
+      end.className = 'end-card';
+      end.innerHTML = `
+        <div class="icon">🎬</div>
+        <h2>That's all of them</h2>
+        <p>Thanks for watching. Your attention data has been recorded.</p>
+      `;
+      feed.appendChild(end);
+    }
+
+    // ── Intersection Observer ────────────────────────────────────────────────
+
+    function setupObserver() {
+      if (observer) observer.disconnect();
+
+      observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          const item = entry.target;
+          if (!item.dataset.videoId) return;
+
+          const videoId = item.dataset.videoId;
+          const videoEl = item.querySelector('video');
+          const position = parseInt(item.dataset.position, 10);
+
+          if (entry.isIntersecting) {
+            // Video entered view
+            videoEl.muted = isMuted;
+            videoEl.play().catch(() => {});
+
+            if (!watchData[videoId]) {
+              watchData[videoId] = { startTime: Date.now(), sent: false, position };
+            } else if (watchData[videoId].startTime === null) {
+              // Scrolled back — don't re-track
+            }
+          } else {
+            // Video left view
+            videoEl.pause();
+
+            const wd = watchData[videoId];
+            if (wd && wd.startTime && !wd.sent) {
+              const elapsed = (Date.now() - wd.startTime) / 1000;
+              wd.sent = true;
+              wd.startTime = null;
+              recordWatch(videoId, elapsed, wd.position);
+            }
+          }
+        });
+      }, { threshold: 0.5 });
+
+      document.querySelectorAll('.video-item').forEach(item => observer.observe(item));
+    }
+
+    // ── Watch event recording ────────────────────────────────────────────────
+
+    function recordWatch(videoId, watchSeconds, feedPosition) {
+      const payload = JSON.stringify({ video_id: videoId, viewer_id: viewerId, watch_seconds: watchSeconds, feed_position: feedPosition });
+
+      // Use sendBeacon for reliability, fall back to fetch
+      if (navigator.sendBeacon) {
+        const blob = new Blob([payload], { type: 'application/json' });
+        navigator.sendBeacon(`/api/sessions/${sessionId}/events`, blob);
+      } else {
+        fetch(`/api/sessions/${sessionId}/events`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload
+        }).catch(() => {});
+      }
+    }
+
+    // Also record on page hide (tab close, navigate away)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        document.querySelectorAll('.video-item').forEach(item => {
+          const videoId = item.dataset.videoId;
+          const wd = watchData[videoId];
+          if (wd && wd.startTime && !wd.sent) {
+            const elapsed = (Date.now() - wd.startTime) / 1000;
+            wd.sent = true;
+            recordWatch(videoId, elapsed, wd.position);
+          }
+        });
+      }
+    });
+
+    // ── Mute toggle ──────────────────────────────────────────────────────────
+
+    function toggleMute() {
+      isMuted = !isMuted;
+      document.querySelectorAll('.video-item video').forEach(v => { v.muted = isMuted; });
+      document.querySelectorAll('.mute-btn').forEach(btn => { btn.innerHTML = muteIcon(); });
+    }
+
+    function muteIcon() {
+      return isMuted
+        ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`
+        : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>`;
+    }
+
+    // ── Error helper ─────────────────────────────────────────────────────────
+
+    function showError(msg) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('tap-overlay').style.display = 'none';
+      document.getElementById('error-msg').textContent = msg;
+      document.getElementById('error').style.display = 'flex';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scroll Stopper — Results — S.E. Media</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0a;
+      --surface: #161616;
+      --border: #282828;
+      --accent: #1B5EFF;
+      --accent-dim: rgba(27,94,255,0.12);
+      --accent-glow: rgba(27,94,255,0.3);
+      --text: #f0f0f0;
+      --muted: #666;
+      --success: #22c55e;
+      --radius: 0px;
+      --font: 'Space Mono', 'Courier New', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      padding: 24px 16px 80px;
+    }
+
+    header {
+      max-width: 640px;
+      margin: 0 auto 32px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .back-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 0;
+      padding: 8px 12px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      font-family: var(--font);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 2px;
+      flex-shrink: 0;
+      transition: color 0.15s;
+    }
+
+    .back-btn:hover { color: var(--text); }
+
+    .header-text h1 {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .header-text .sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+      letter-spacing: 0.3px;
+    }
+
+    .refresh-btn {
+      margin-left: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 0;
+      padding: 8px 12px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: color 0.15s;
+      flex-shrink: 0;
+    }
+
+    .refresh-btn:hover { color: var(--text); }
+
+    /* ── Summary banner ── */
+    .summary-banner {
+      max-width: 640px;
+      margin: 0 auto 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      flex: 1;
+      min-width: 100px;
+    }
+
+    .stat .val {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+
+    .stat .label {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 6px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .stat.accent .val { color: var(--accent); }
+
+    /* ── Verdict ── */
+    .verdict {
+      max-width: 640px;
+      margin: 0 auto 16px;
+      padding: 16px 20px;
+      border-radius: 0;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      line-height: 1.6;
+    }
+
+    .verdict.pass {
+      background: rgba(34,197,94,0.1);
+      border: 1px solid rgba(34,197,94,0.25);
+      color: var(--success);
+    }
+
+    .verdict.fail {
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.25);
+      color: #ef4444;
+    }
+
+    .verdict.neutral {
+      background: rgba(255,200,0,0.08);
+      border: 1px solid rgba(255,200,0,0.2);
+      color: #ffc800;
+    }
+
+    /* ── Section ── */
+    .section-label {
+      max-width: 640px;
+      margin: 24px auto 10px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--muted);
+    }
+
+    /* ── Video cards ── */
+    .video-card {
+      max-width: 640px;
+      margin: 0 auto 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+    }
+
+    .video-card.is-test {
+      border-color: var(--accent-glow);
+      background: linear-gradient(135deg, #161616, rgba(233,30,140,0.05));
+    }
+
+    .video-card-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .video-name {
+      flex: 1;
+      font-size: 12px;
+      font-weight: 400;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      letter-spacing: 0.3px;
+    }
+
+    .test-badge {
+      font-size: 9px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      padding: 3px 9px;
+      border-radius: 0;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .bench-badge {
+      font-size: 9px;
+      background: rgba(255,255,255,0.06);
+      color: var(--muted);
+      padding: 3px 9px;
+      border-radius: 0;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .video-stats {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 12px;
+    }
+
+    .v-stat .val {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .video-card.is-test .v-stat .val { color: var(--accent); }
+
+    .v-stat .label {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 4px;
+    }
+
+    /* ── Watch time bar ── */
+    .bar-track {
+      height: 3px;
+      background: var(--border);
+      border-radius: 0;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 0;
+      background: var(--muted);
+      transition: width 0.6s ease;
+      min-width: 2px;
+    }
+
+    .video-card.is-test .bar-fill { background: var(--accent); }
+
+    /* ── Dot plot ── */
+    .dot-plot {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      position: relative;
+      cursor: default;
+    }
+
+    .dot[title]:hover::after {
+      content: attr(title);
+      position: absolute;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #222;
+      color: #fff;
+      font-size: 11px;
+      padding: 3px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+      z-index: 10;
+    }
+
+    .no-data {
+      font-size: 13px;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    /* ── Loading ── */
+    #loading {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--muted);
+    }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 2px solid #222;
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 12px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #error-msg {
+      text-align: center;
+      padding: 80px 20px;
+      color: #ef4444;
+    }
+
+    .live-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      background: var(--success);
+      border-radius: 50%;
+      margin-right: 5px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a class="back-btn" href="/admin.html">← Back</a>
+    <div class="header-text">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <span style="font-size:18px;line-height:1">👀</span>
+        <h1 id="session-name">Results</h1>
+      </div>
+      <div class="sub" id="session-sub"></div>
+    </div>
+    <button class="refresh-btn" onclick="load()">↺ Refresh</button>
+  </header>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <p>Loading results…</p>
+  </div>
+
+  <div id="content" style="display:none"></div>
+  <div id="error-msg" style="display:none"></div>
+
+  <script>
+    const sessionId = new URLSearchParams(location.search).get('session');
+    let maxAvg = 0;
+
+    async function load() {
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('content').style.display = 'none';
+      document.getElementById('error-msg').style.display = 'none';
+
+      try {
+        const res = await fetch(`/api/sessions/${sessionId}/results`);
+        if (!res.ok) throw new Error('Not found');
+        const data = await res.json();
+        render(data);
+      } catch (e) {
+        document.getElementById('loading').style.display = 'none';
+        const el = document.getElementById('error-msg');
+        el.style.display = 'block';
+        el.textContent = 'Could not load results. Check the session ID.';
+      }
+    }
+
+    function render({ session, results }) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('session-name').textContent = session.name;
+      document.getElementById('session-sub').innerHTML =
+        `<span class="live-dot"></span>Live · Created ${formatDate(session.created_at)}`;
+
+      const testVideos = results.filter(v => v.is_test_video);
+      const benchmarks = results.filter(v => !v.is_test_video);
+
+      const totalViewers = new Set(results.flatMap(v => v.watch_times.map((_, i) => i))).size;
+      const totalUniqueViewers = results.reduce((max, v) => Math.max(max, v.viewer_count), 0);
+
+      const benchAvg = benchmarks.length
+        ? benchmarks.reduce((s, v) => s + v.avg_watch_seconds, 0) / benchmarks.length
+        : 0;
+
+      const testAvg = testVideos.length ? testVideos[0].avg_watch_seconds : null;
+
+      // Max bar width reference
+      maxAvg = Math.max(...results.map(v => v.avg_watch_seconds), 0.1);
+
+      const content = document.getElementById('content');
+      content.innerHTML = '';
+      content.style.display = 'block';
+
+      // ── Summary banner ──────────────────────────────────────────────────────
+      const banner = document.createElement('div');
+      banner.className = 'summary-banner';
+      banner.innerHTML = `
+        <div class="stat">
+          <div class="val">${totalUniqueViewers}</div>
+          <div class="label">Unique Viewers</div>
+        </div>
+        <div class="stat">
+          <div class="val">${benchmarks.length}</div>
+          <div class="label">Benchmarks</div>
+        </div>
+        <div class="stat">
+          <div class="val">${benchAvg.toFixed(1)}s</div>
+          <div class="label">Bench Avg</div>
+        </div>
+        ${testAvg !== null ? `
+        <div class="stat accent">
+          <div class="val">${testAvg.toFixed(1)}s</div>
+          <div class="label">Your Video Avg</div>
+        </div>` : ''}
+      `;
+      content.appendChild(banner);
+
+      // ── Verdict ─────────────────────────────────────────────────────────────
+      if (testAvg !== null && benchAvg > 0) {
+        const diff = testAvg - benchAvg;
+        const pct = Math.round(Math.abs(diff / benchAvg) * 100);
+        const verdict = document.createElement('div');
+
+        if (diff >= 0) {
+          verdict.className = 'verdict pass';
+          verdict.textContent = `Your hook is holding attention ${pct}% longer than the benchmark average. Solid.`;
+        } else if (pct <= 20) {
+          verdict.className = 'verdict neutral';
+          verdict.textContent = `Your hook is within ${pct}% of the benchmark average. Close — worth iterating.`;
+        } else {
+          verdict.className = 'verdict fail';
+          verdict.textContent = `Viewers scroll past your video ${pct}% faster than benchmarks. The hook needs work.`;
+        }
+        content.appendChild(verdict);
+      } else if (testAvg !== null && benchAvg === 0) {
+        const verdict = document.createElement('div');
+        verdict.className = 'verdict neutral';
+        verdict.textContent = 'No benchmark data yet. Keep sharing the link.';
+        content.appendChild(verdict);
+      }
+
+      // ── Test videos ─────────────────────────────────────────────────────────
+      if (testVideos.length) {
+        const label = document.createElement('div');
+        label.className = 'section-label';
+        label.textContent = 'Your Test Video';
+        content.appendChild(label);
+
+        testVideos.forEach(v => content.appendChild(buildCard(v, true)));
+      }
+
+      // ── Benchmarks ──────────────────────────────────────────────────────────
+      if (benchmarks.length) {
+        const label = document.createElement('div');
+        label.className = 'section-label';
+        label.textContent = `Benchmarks (${benchmarks.length})`;
+        content.appendChild(label);
+
+        // Sort by avg watch desc
+        [...benchmarks].sort((a, b) => b.avg_watch_seconds - a.avg_watch_seconds)
+          .forEach(v => content.appendChild(buildCard(v, false)));
+      }
+    }
+
+    function buildCard(video, isTest) {
+      const card = document.createElement('div');
+      card.className = `video-card${isTest ? ' is-test' : ''}`;
+
+      const name = video.original_name || video.filename;
+      const pct = maxAvg > 0 ? Math.round((video.avg_watch_seconds / maxAvg) * 100) : 0;
+
+      // Dot colors scale by watch time
+      const dotColor = isTest ? '#e91e8c' : '#444';
+
+      const dotsHtml = video.watch_times.length
+        ? video.watch_times.map(t => {
+            const intensity = Math.min(1, t / Math.max(maxAvg, 1));
+            const opacity = 0.2 + intensity * 0.8;
+            return `<div class="dot" title="${t}s" style="background:${isTest ? `rgba(233,30,140,${opacity})` : `rgba(255,255,255,${opacity})`}"></div>`;
+          }).join('')
+        : `<span class="no-data">No views yet</span>`;
+
+      card.innerHTML = `
+        <div class="video-card-top">
+          <div class="video-name" title="${escHtml(name)}">${escHtml(name)}</div>
+          <span class="${isTest ? 'test-badge' : 'bench-badge'}">${isTest ? 'Your Video' : 'Benchmark'}</span>
+        </div>
+        <div class="video-stats">
+          <div class="v-stat">
+            <div class="val">${video.avg_watch_seconds || 0}s</div>
+            <div class="label">Avg watch</div>
+          </div>
+          <div class="v-stat">
+            <div class="val">${video.max_watch_seconds || 0}s</div>
+            <div class="label">Max watch</div>
+          </div>
+          <div class="v-stat">
+            <div class="val">${video.viewer_count}</div>
+            <div class="label">Viewers</div>
+          </div>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${pct}%"></div>
+        </div>
+        <div class="dot-plot" style="margin-top:12px">${dotsHtml}</div>
+      `;
+
+      return card;
+    }
+
+    function formatDate(str) {
+      return new Date(str).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function escHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    if (sessionId) load();
+    else {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('error-msg').style.display = 'block';
+      document.getElementById('error-msg').textContent = 'No session ID in URL.';
+    }
+
+    // Auto-refresh every 30 seconds
+    setInterval(load, 30000);
+  </script>
+</body>
+</html>
