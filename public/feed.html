@@ -305,6 +305,7 @@
         const res = await fetch(`/api/sessions/${sessionId}`);
         if (!res.ok) return showError('Session not found.');
         const session = await res.json();
+        document.title = `${session.name} — Scroll Stopper`;
 
         const { videos } = session;
         if (!videos.length) return showError('No videos in this session yet.');

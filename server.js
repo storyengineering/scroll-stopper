@@ -35,6 +35,25 @@ const upload = multer({
 });
 
 app.use(express.json());
+
+// Serve feed.html with dynamic title for link previews
+app.get('/feed.html', (req, res) => {
+  const sessionId = req.query.session;
+  let html = fs.readFileSync(path.join(__dirname, 'public', 'feed.html'), 'utf8');
+
+  if (sessionId) {
+    const session = db.prepare('SELECT name FROM sessions WHERE id = ?').get(sessionId);
+    if (session) {
+      html = html.replace(
+        '<title>Scroll Stopper — Story Engineering</title>',
+        `<title>${session.name} — Scroll Stopper</title>`
+      );
+    }
+  }
+
+  res.type('html').send(html);
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 if (!useR2) app.use('/uploads', express.static(uploadsDir));
 
