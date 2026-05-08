@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Thin phone outline -->
+  <rect x="14" y="4" width="36" height="56" rx="6" fill="none" stroke="#666" stroke-width="2"/>
+
+  <!-- Top video (cropped) -->
+  <rect x="18" y="9" width="28" height="11" rx="1.5" fill="#1B5EFF"/>
+
+  <!-- Center video (main) -->
+  <rect x="18" y="23" width="28" height="18" rx="1.5" fill="#1B5EFF"/>
+
+  <!-- Bottom video (cropped) -->
+  <rect x="18" y="44" width="28" height="11" rx="1.5" fill="#1B5EFF"/>
+</svg>

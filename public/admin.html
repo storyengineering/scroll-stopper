@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Scroll Stopper — S.E. Media</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👀</text></svg>">
+  <title>Scroll Stopper — Story Engineering</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
   <style>
@@ -19,7 +19,7 @@
       --text: #f0f0f0;
       --muted: #777;
       --success: #22c55e;
-      --radius: 0px;
+      --danger: #ef4444;
       --font: 'Space Mono', 'Courier New', monospace;
     }
 
@@ -28,614 +28,335 @@
       color: var(--text);
       font-family: var(--font);
       min-height: 100vh;
-      padding: 24px 16px 80px;
     }
 
-    header {
-      max-width: 600px;
-      margin: 0 auto 40px;
+    /* ── Sticky header ── */
+    .top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
-    header h1 {
+    .top-bar .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .top-bar h1 {
       font-size: 13px;
       font-weight: 700;
       letter-spacing: 2px;
       text-transform: uppercase;
     }
 
-    header p {
-      color: var(--muted);
-      font-size: 11px;
-      margin-top: 4px;
-      letter-spacing: 0.5px;
-    }
-
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 24px;
-      max-width: 600px;
-      margin: 0 auto 16px;
-    }
-
-    .card h2 {
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
-
-    .card .sub {
+    .top-bar .sub {
       font-size: 11px;
       color: var(--muted);
-      margin-bottom: 20px;
       letter-spacing: 0.3px;
+      display: none;
     }
 
-    .card.disabled {
-      opacity: 0.35;
-      pointer-events: none;
+    @media (min-width: 500px) {
+      .top-bar .sub { display: inline; }
     }
 
-    .step-num {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 22px;
-      height: 22px;
-      background: var(--accent-dim);
-      color: var(--accent);
-      border-radius: 50%;
-      font-size: 11px;
-      font-weight: 700;
-      margin-right: 8px;
-      vertical-align: middle;
-    }
+    .top-bar .spacer { flex: 1; }
 
-    input[type="text"] {
-      width: 100%;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 0;
-      color: var(--text);
-      font-size: 13px;
-      padding: 12px 14px;
-      outline: none;
-      transition: border-color 0.15s;
-      font-family: var(--font);
-      letter-spacing: 0.5px;
-    }
-
-    input[type="text"]:focus { border-color: var(--accent); }
-
-    button {
-      cursor: pointer;
-      font-family: var(--font);
-      border: none;
-      border-radius: 0;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      padding: 10px 20px;
-      transition: opacity 0.15s, transform 0.1s;
-    }
-
-    button:active { transform: scale(0.97); }
-
-    .btn-primary {
+    .btn-new {
       background: var(--accent);
       color: #fff;
-      width: 100%;
-      padding: 13px;
-      margin-top: 12px;
-      font-size: 15px;
-    }
-
-    .btn-primary:hover { opacity: 0.88; }
-    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
-
-    .btn-save {
-      background: #bbb;
-      color: #000;
-      width: 100%;
-      padding: 13px;
-      margin-top: 12px;
-      font-size: 15px;
-      font-family: var(--font);
       border: none;
-      cursor: pointer;
+      border-radius: 0;
+      font-family: var(--font);
+      font-size: 11px;
       font-weight: 700;
       letter-spacing: 1px;
       text-transform: uppercase;
+      padding: 10px 18px;
+      cursor: pointer;
       transition: opacity 0.15s, transform 0.1s;
+      flex-shrink: 0;
     }
 
-    .btn-save:hover { opacity: 0.88; }
-    .btn-save:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-new:hover { opacity: 0.88; }
+    .btn-new:active { transform: scale(0.97); }
 
-    .drop-zone {
-      border: 2px dashed var(--border);
-      border-radius: 0;
-      padding: 32px 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color 0.15s, background 0.15s;
-      position: relative;
+    /* ── New test form ── */
+    .new-form {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 20px 24px 0;
+      display: none;
     }
 
-    .drop-zone:hover,
-    .drop-zone.drag-over {
-      border-color: var(--accent);
-      background: var(--accent-dim);
-    }
+    .new-form.open { display: block; }
 
-    .drop-zone input[type="file"] {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      cursor: pointer;
-    }
-
-    .drop-zone .icon {
-      font-size: 28px;
-      margin-bottom: 8px;
-    }
-
-    .drop-zone .label {
-      font-size: 14px;
-      color: var(--muted);
-    }
-
-    .drop-zone .label strong { color: var(--text); }
-
-    .video-list {
-      margin-top: 16px;
+    .new-form-inner {
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      padding: 20px;
       display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .video-row {
-      display: flex;
-      align-items: center;
       gap: 10px;
+      align-items: flex-end;
+    }
+
+    .new-form-inner .field {
+      flex: 1;
+    }
+
+    .new-form-inner label {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .new-form-inner input {
+      width: 100%;
       background: var(--bg);
       border: 1px solid var(--border);
-      border-radius: 0;
+      color: var(--text);
+      font-size: 13px;
       padding: 10px 12px;
-      font-size: 12px;
+      outline: none;
+      font-family: var(--font);
+      letter-spacing: 0.5px;
+    }
+
+    .new-form-inner input:focus { border-color: var(--accent); }
+
+    .btn-create {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      font-family: var(--font);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 11px 20px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .btn-create:hover { opacity: 0.88; }
+    .btn-create:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Session list ── */
+    .session-list {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 20px 24px;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      padding: 80px 20px;
       letter-spacing: 0.3px;
     }
 
-    .video-row .name {
-      flex: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .video-row .status {
-      font-size: 10px;
-      padding: 2px 8px;
-      border-radius: 0;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      flex-shrink: 0;
-    }
-
-    .status-uploading {
-      background: rgba(255,200,0,0.15);
-      color: #ffc800;
-    }
-
-    .status-done {
-      background: rgba(34,197,94,0.15);
-      color: var(--success);
-    }
-
-    .status-error {
-      background: rgba(239,68,68,0.15);
-      color: #ef4444;
-    }
-
-    .remove-btn {
-      background: none;
-      color: var(--muted);
-      padding: 2px 6px;
-      font-size: 16px;
-      border-radius: 0;
-      line-height: 1;
-    }
-
-    .remove-btn:hover { color: #ef4444; background: rgba(239,68,68,0.1); }
-
-    .progress-bar-wrap {
-      width: 60px;
-      height: 3px;
-      background: var(--border);
-      border-radius: 0;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-
-    .progress-bar {
-      height: 100%;
-      background: var(--accent);
-      border-radius: 0;
-      transition: width 0.2s;
-    }
-
-    .share-box {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      background: var(--bg);
+    .session-row {
+      background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 0;
-      padding: 10px 14px;
+      margin-bottom: 8px;
+      transition: border-color 0.15s;
+      display: flex;
+    }
+
+    .session-row:hover { border-color: #444; }
+
+    .session-indicator {
+      width: 4px;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .session-body {
+      flex: 1;
+      padding: 14px 16px;
+    }
+
+    .session-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
       margin-bottom: 10px;
     }
 
-    .share-box .share-label {
-      font-size: 11px;
-      color: var(--muted);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      flex-shrink: 0;
-      width: 60px;
-    }
-
-    .share-box .share-url {
+    .session-info {
       flex: 1;
+      min-width: 0;
+    }
+
+    .session-name {
       font-size: 13px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      color: var(--accent);
-      text-decoration: none;
-    }
-
-    .share-box .share-url:hover { text-decoration: underline; }
-
-    .copy-btn {
-      background: var(--accent-dim);
-      color: var(--accent);
-      padding: 5px 10px;
-      font-size: 10px;
-      border-radius: 0;
-      flex-shrink: 0;
-    }
-
-    .copy-btn:hover { background: rgba(27,94,255,0.22); }
-    .copy-btn.copied { color: var(--success); background: rgba(34,197,94,0.12); }
-
-    .test-badge {
-      font-size: 9px;
-      background: var(--accent-dim);
-      color: var(--accent);
-      padding: 2px 8px;
-      border-radius: 0;
       font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      flex-shrink: 0;
+      letter-spacing: 0.5px;
+      cursor: text;
     }
 
-    .library-item {
+    .session-name:hover { color: var(--accent); }
+
+    .session-meta {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 4px;
+      letter-spacing: 0.3px;
+    }
+
+    .session-actions {
       display: flex;
-      align-items: center;
-      gap: 10px;
+      gap: 6px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+    }
+
+    .action-btn {
       background: var(--bg);
       border: 1px solid var(--border);
-      padding: 10px 12px;
-      font-size: 12px;
-      letter-spacing: 0.3px;
+      color: var(--muted);
+      font-family: var(--font);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      padding: 6px 10px;
       cursor: pointer;
-      transition: border-color 0.15s;
-    }
-
-    .library-item:hover { border-color: var(--muted); }
-    .library-item.selected { border-color: var(--accent); background: var(--accent-dim); }
-
-    .library-item input[type="checkbox"] {
-      accent-color: var(--accent);
-      width: 16px;
-      height: 16px;
-      flex-shrink: 0;
-    }
-
-    .library-item .name {
-      flex: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      transition: color 0.15s, border-color 0.15s;
       white-space: nowrap;
     }
 
-    .library-empty {
+    .action-btn:hover { color: var(--text); border-color: var(--muted); }
+    .action-btn.setup-btn:hover { color: var(--accent); border-color: var(--accent); }
+    .action-btn.launch-btn { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .action-btn.launch-btn:hover { opacity: 0.88; color: #fff; }
+    .action-btn.results-btn:hover { color: var(--accent); border-color: var(--accent); }
+    .action-btn.copied { color: var(--success); border-color: var(--success); }
+    .action-btn.delete-btn:hover { color: var(--danger); border-color: var(--danger); }
+
+    /* ── Footer ── */
+    footer {
       text-align: center;
-      color: var(--muted);
-      font-size: 12px;
-      padding: 20px;
-      letter-spacing: 0.3px;
-    }
-
-    .library-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      margin-bottom: 16px;
-      max-height: 300px;
-      overflow-y: auto;
-    }
-
-    .library-add-zone {
-      border: 1px dashed var(--border);
-      padding: 16px 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color 0.15s, background 0.15s;
-      position: relative;
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .library-add-zone:hover,
-    .library-add-zone.drag-over {
-      border-color: var(--accent);
-      background: var(--accent-dim);
-    }
-
-    .library-add-zone input[type="file"] {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      cursor: pointer;
-    }
-
-    .count-badge {
-      display: inline-block;
-      background: var(--accent);
-      color: #fff;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 1px 7px;
-      border-radius: 0;
-      margin-left: 6px;
-      vertical-align: middle;
+      padding: 40px 20px;
+      font-size: 11px;
+      color: #333;
+      letter-spacing: 0.5px;
     }
   </style>
 </head>
 <body>
-  <header>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-      <span style="font-size:22px;line-height:1">👀</span>
-      <h1>SCROLL STOPPER</h1>
-    </div>
-    <p>Test your video hook against real benchmark content — S.E. Media</p>
-  </header>
 
-  <!-- Step 1: Name the test -->
-  <div class="card" id="step-name">
-    <h2><span class="step-num">1</span>Name your test</h2>
-    <p class="sub">Give this session a name so you can find it later</p>
-    <input type="text" id="session-name" placeholder="e.g. Hook Test — Pitch v3" maxlength="80">
-    <button class="btn-save" id="save-btn" onclick="saveName()">Save</button>
+  <div class="top-bar">
+    <div class="logo">
+      <img src="/favicon.svg" alt="" style="width:24px;height:24px">
+      <h1>Scroll Stopper</h1>
+    </div>
+    <span class="sub"></span>
+    <div class="spacer"></div>
+    <button class="btn-new" onclick="toggleNewForm()">+ New Test</button>
   </div>
 
-  <!-- Step 2: Select benchmarks from library (hidden until name saved) -->
-  <div class="card" id="step-benchmarks" style="display:none">
-    <h2><span class="step-num">2</span>Select benchmarks <span id="bench-count" class="count-badge" style="display:none">0</span></h2>
-    <p class="sub">Pick benchmark videos from your library, or add new ones</p>
-    <div class="library-grid" id="library-grid"></div>
-    <div class="library-add-zone" id="library-add-zone">
-      <input type="file" id="library-input" accept="video/*" multiple>
-      + Add videos to library
-    </div>
-    <div class="video-list" id="library-upload-list"></div>
-  </div>
-
-  <!-- Step 3: Test video (hidden until name saved) -->
-  <div class="card" id="step-test" style="display:none">
-    <h2><span class="step-num">3</span>Upload your test video</h2>
-    <p class="sub">This is the video whose hook you want to test</p>
-    <div class="drop-zone" id="test-drop">
-      <input type="file" id="test-input" accept="video/*">
-      <div class="icon">🎯</div>
-      <div class="label"><strong>Drop your video here</strong> or click to browse</div>
-    </div>
-    <div class="video-list" id="test-list"></div>
-  </div>
-
-  <!-- Create Test button (hidden until name saved) -->
-  <div id="step-create" style="display:none;max-width:600px;margin:0 auto 16px">
-    <button class="btn-primary" id="create-btn" onclick="createSession()">Create Test</button>
-  </div>
-
-  <!-- Step 4: Links (hidden until test created) -->
-  <div class="card" id="step-links" style="display:none">
-    <h2><span class="step-num">4</span>Share your test</h2>
-    <p class="sub">Send the feed link to testers. View results anytime.</p>
-
-    <div class="share-box">
-      <span class="share-label">📱 Feed</span>
-      <a class="share-url" id="feed-url" target="_blank"></a>
-      <button class="copy-btn" onclick="copyLink('feed-url', this)">Copy</button>
-    </div>
-
-    <div class="share-box">
-      <span class="share-label">📈 Results</span>
-      <a class="share-url" id="results-url" target="_blank"></a>
-      <button class="copy-btn" onclick="copyLink('results-url', this)">Copy</button>
+  <div class="new-form" id="new-form">
+    <div class="new-form-inner">
+      <div class="field">
+        <label>Test Name</label>
+        <input type="text" id="new-name" placeholder="e.g. Hook Test — Pitch v3" maxlength="80">
+      </div>
+      <button class="btn-create" id="create-btn" onclick="createTest()">Create</button>
     </div>
   </div>
+
+  <div class="session-list" id="session-list"></div>
+
+  <footer>&copy; S.E. Media, LLC 2026</footer>
 
   <script>
-    let sessionId = null;
-    let testVideoId = null;
-    const selectedBenchmarks = new Set();
+    // ── Load sessions ─────────────────────────────────────────────────────────
 
-    // ── Library ────────────────────────────────────────────────────────────────
+    async function loadSessions() {
+      const list = document.getElementById('session-list');
+      try {
+        const res = await fetch('/api/sessions');
+        const sessions = await res.json();
 
-    async function loadLibrary() {
-      const res = await fetch('/api/library');
-      const videos = await res.json();
-      const grid = document.getElementById('library-grid');
-      grid.innerHTML = '';
+        if (!sessions.length) {
+          list.innerHTML = '<div class="empty-state">No tests yet — click "+ New Test" to get started</div>';
+          return;
+        }
 
-      if (!videos.length) {
-        grid.innerHTML = '<div class="library-empty">No videos in library yet — add some below</div>';
-        return;
-      }
-
-      videos.forEach(v => {
-        const item = document.createElement('label');
-        item.className = 'library-item';
-
-        const cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.checked = false;
-        cb.value = v.id;
-
-        cb.addEventListener('change', () => {
-          if (cb.checked) {
-            selectedBenchmarks.add(v.id);
-            item.classList.add('selected');
-          } else {
-            selectedBenchmarks.delete(v.id);
-            item.classList.remove('selected');
-          }
-          updateBenchCount();
-          syncBenchmarks();
-        });
-
-        const name = document.createElement('span');
-        name.className = 'name';
-        name.textContent = v.original_name || v.filename;
-
-        const removeBtn = document.createElement('button');
-        removeBtn.className = 'remove-btn';
-        removeBtn.textContent = '×';
-        removeBtn.title = 'Remove from library';
-        removeBtn.onclick = async (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          await fetch(`/api/library/${v.id}`, { method: 'DELETE' });
-          selectedBenchmarks.delete(v.id);
-          item.remove();
-          updateBenchCount();
-          syncBenchmarks();
-          if (!document.querySelector('.library-item')) {
-            grid.innerHTML = '<div class="library-empty">No videos in library yet — add some below</div>';
-          }
-        };
-
-        item.appendChild(cb);
-        item.appendChild(name);
-        item.appendChild(removeBtn);
-        grid.appendChild(item);
-      });
-
-      updateBenchCount();
-    }
-
-    function updateBenchCount() {
-      const badge = document.getElementById('bench-count');
-      if (selectedBenchmarks.size > 0) {
-        badge.style.display = 'inline-block';
-        badge.textContent = selectedBenchmarks.size;
-      } else {
-        badge.style.display = 'none';
+        list.innerHTML = '';
+        sessions.forEach(s => list.appendChild(buildRow(s)));
+      } catch {
+        list.innerHTML = '<div class="empty-state">Could not load sessions</div>';
       }
     }
 
-    async function syncBenchmarks() {
-      if (!sessionId) return;
-      await fetch(`/api/sessions/${sessionId}/benchmarks`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ library_video_ids: [...selectedBenchmarks] })
-      });
-    }
-
-    function uploadToLibrary(file) {
-      const listEl = document.getElementById('library-upload-list');
-
+    function buildRow(session) {
       const row = document.createElement('div');
-      row.className = 'video-row';
+      row.className = 'session-row';
 
-      const nameEl = document.createElement('span');
-      nameEl.className = 'name';
-      nameEl.textContent = file.name;
-
-      const progressWrap = document.createElement('div');
-      progressWrap.className = 'progress-bar-wrap';
-      const progressBar = document.createElement('div');
-      progressBar.className = 'progress-bar';
-      progressBar.style.width = '0%';
-      progressWrap.appendChild(progressBar);
-
-      const statusEl = document.createElement('span');
-      statusEl.className = 'status status-uploading';
-      statusEl.textContent = 'Uploading';
-
-      row.appendChild(nameEl);
-      row.appendChild(progressWrap);
-      row.appendChild(statusEl);
-      listEl.appendChild(row);
-
-      const formData = new FormData();
-      formData.append('video', file);
-
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', '/api/library');
-
-      xhr.upload.addEventListener('progress', e => {
-        if (e.lengthComputable) {
-          progressBar.style.width = `${Math.round(e.loaded / e.total * 100)}%`;
-        }
+      const date = new Date(session.created_at).toLocaleDateString('en-US', {
+        month: 'short', day: 'numeric', year: 'numeric'
       });
 
-      xhr.addEventListener('load', () => {
-        if (xhr.status === 200) {
-          progressWrap.style.display = 'none';
-          statusEl.className = 'status status-done';
-          statusEl.textContent = 'Done';
-          // Reload the library grid after a short delay so the new video appears
-          setTimeout(() => {
-            row.remove();
-            loadLibrary().then(syncBenchmarks);
-          }, 500);
-        } else {
-          statusEl.className = 'status status-error';
-          statusEl.textContent = 'Error';
-        }
-      });
+      const stats = [];
+      if (session.video_count) stats.push(`${session.video_count} video${session.video_count !== 1 ? 's' : ''}`);
+      if (session.viewer_count) stats.push(`${session.viewer_count} viewer${session.viewer_count !== 1 ? 's' : ''}`);
+      const statsText = stats.length ? ` · ${stats.join(' · ')}` : '';
 
-      xhr.addEventListener('error', () => {
-        statusEl.className = 'status status-error';
-        statusEl.textContent = 'Failed';
-      });
+      row.innerHTML = `
+        <div class="session-indicator"></div>
+        <div class="session-body">
+          <div class="session-top">
+            <div class="session-info">
+              <div class="session-name" onclick="renameSession('${session.id}', this)">${escHtml(session.name)}</div>
+              <div class="session-meta">${date}${statsText}</div>
+            </div>
+          </div>
+          <div class="session-actions">
+            <button class="action-btn setup-btn" onclick="location.href='setup.html?session=${session.id}'" title="Set up test">Setup</button>
+            <button class="action-btn launch-btn" onclick="window.open('feed.html?session=${session.id}','_blank')" title="Open feed">Launch Feed</button>
+            <button class="action-btn" onclick="copyLink(this, 'feed', '${session.id}')" title="Copy feed link">Copy Feed</button>
+            <button class="action-btn" onclick="copyLink(this, 'results', '${session.id}')" title="Copy results link">Copy Results</button>
+            <button class="action-btn results-btn" onclick="location.href='results.html?session=${session.id}'" title="View results">Results</button>
+            <button class="action-btn delete-btn" onclick="deleteSession('${session.id}', this)" title="Delete test">Delete</button>
+          </div>
+        </div>
+      `;
 
-      xhr.send(formData);
+      return row;
     }
 
-    // ── Save name (creates API session, reveals setup steps) ────────────────
+    // ── New test ──────────────────────────────────────────────────────────────
 
-    async function saveName() {
-      const name = document.getElementById('session-name').value.trim();
-      if (!name) {
-        document.getElementById('session-name').focus();
-        return;
+    function toggleNewForm() {
+      const form = document.getElementById('new-form');
+      form.classList.toggle('open');
+      if (form.classList.contains('open')) {
+        document.getElementById('new-name').focus();
       }
+    }
 
-      const btn = document.getElementById('save-btn');
+    async function createTest() {
+      const input = document.getElementById('new-name');
+      const name = input.value.trim();
+      if (!name) { input.focus(); return; }
+
+      const btn = document.getElementById('create-btn');
       btn.disabled = true;
-      btn.textContent = 'Saving…';
+      btn.textContent = 'Creating…';
 
       try {
         const res = await fetch('/api/sessions', {
@@ -643,192 +364,72 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name })
         });
-
         const data = await res.json();
-        sessionId = data.id;
-
-        btn.textContent = 'Saved ✓';
-        document.getElementById('session-name').disabled = true;
-
-        // Show benchmarks, test video, and create button
-        document.getElementById('step-benchmarks').style.display = 'block';
-        document.getElementById('step-test').style.display = 'block';
-        document.getElementById('step-create').style.display = 'block';
-        loadLibrary();
-      } catch (err) {
+        location.href = `setup.html?session=${data.id}`;
+      } catch {
         btn.disabled = false;
-        btn.textContent = 'Save';
-        alert('Failed to save. Is the server running?');
-      }
-    }
-
-    // ── Create test (syncs benchmarks and shows links) ────────────────────────
-
-    async function createSession() {
-      const btn = document.getElementById('create-btn');
-      btn.disabled = true;
-      btn.textContent = 'Creating…';
-
-      try {
-        await syncBenchmarks();
-        updateLinks();
-        document.getElementById('step-links').style.display = 'block';
-        btn.textContent = 'Created ✓';
-
-        // Scroll to the links
-        document.getElementById('step-links').scrollIntoView({ behavior: 'smooth' });
-      } catch (err) {
-        btn.disabled = false;
-        btn.textContent = 'Create Test';
+        btn.textContent = 'Create';
         alert('Failed to create test.');
       }
     }
 
-    // ── Test video upload ──────────────────────────────────────────────────────
+    // ── Actions ───────────────────────────────────────────────────────────────
 
-    function setupDropZone(dropEl, inputEl, handler) {
-      dropEl.addEventListener('dragover', e => {
-        e.preventDefault();
-        dropEl.classList.add('drag-over');
-      });
-      dropEl.addEventListener('dragleave', () => dropEl.classList.remove('drag-over'));
-      dropEl.addEventListener('drop', e => {
-        e.preventDefault();
-        dropEl.classList.remove('drag-over');
-        handler(Array.from(e.dataTransfer.files));
-      });
-      inputEl.addEventListener('change', () => {
-        handler(Array.from(inputEl.files));
-        inputEl.value = '';
-      });
-    }
-
-    function uploadTestVideo(file) {
-      const listEl = document.getElementById('test-list');
-      listEl.innerHTML = '';
-
-      const row = document.createElement('div');
-      row.className = 'video-row';
-
-      const nameEl = document.createElement('span');
-      nameEl.className = 'name';
-      nameEl.textContent = file.name;
-
-      const badge = document.createElement('span');
-      badge.className = 'test-badge';
-      badge.textContent = 'Your Video';
-
-      const progressWrap = document.createElement('div');
-      progressWrap.className = 'progress-bar-wrap';
-      const progressBar = document.createElement('div');
-      progressBar.className = 'progress-bar';
-      progressBar.style.width = '0%';
-      progressWrap.appendChild(progressBar);
-
-      const statusEl = document.createElement('span');
-      statusEl.className = 'status status-uploading';
-      statusEl.textContent = 'Uploading';
-
-      row.appendChild(nameEl);
-      row.appendChild(badge);
-      row.appendChild(progressWrap);
-      row.appendChild(statusEl);
-      listEl.appendChild(row);
-
-      const formData = new FormData();
-      formData.append('video', file);
-      formData.append('is_test_video', 'true');
-
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', `/api/sessions/${sessionId}/videos`);
-
-      xhr.upload.addEventListener('progress', e => {
-        if (e.lengthComputable) {
-          progressBar.style.width = `${Math.round(e.loaded / e.total * 100)}%`;
-        }
-      });
-
-      xhr.addEventListener('load', () => {
-        if (xhr.status === 200) {
-          const data = JSON.parse(xhr.responseText);
-          progressWrap.style.display = 'none';
-          statusEl.className = 'status status-done';
-          statusEl.textContent = 'Done';
-          testVideoId = data.id;
-
-          const removeBtn = document.createElement('button');
-          removeBtn.className = 'remove-btn';
-          removeBtn.textContent = '×';
-          removeBtn.title = 'Remove';
-          removeBtn.onclick = async () => {
-            await fetch(`/api/sessions/${sessionId}/videos/${data.id}`, { method: 'DELETE' });
-            row.remove();
-            testVideoId = null;
-          };
-          row.appendChild(removeBtn);
-        } else {
-          statusEl.className = 'status status-error';
-          statusEl.textContent = 'Error';
-        }
-      });
-
-      xhr.addEventListener('error', () => {
-        statusEl.className = 'status status-error';
-        statusEl.textContent = 'Failed';
-      });
-
-      xhr.send(formData);
-    }
-
-    // ── Links ──────────────────────────────────────────────────────────────────
-
-    function updateLinks() {
+    async function copyLink(btn, type, sessionId) {
       const base = location.origin;
-      const feedLink = `${base}/feed.html?session=${sessionId}`;
-      const resultsLink = `${base}/results.html?session=${sessionId}`;
-      const feedEl = document.getElementById('feed-url');
-      const resultsEl = document.getElementById('results-url');
-      feedEl.textContent = feedLink;
-      feedEl.href = feedLink;
-      resultsEl.textContent = resultsLink;
-      resultsEl.href = resultsLink;
-    }
-
-    async function copyLink(elId, btn) {
-      const url = document.getElementById(elId).textContent;
+      const page = type === 'feed' ? 'feed.html' : 'results.html';
+      const url = `${base}/${page}?session=${sessionId}`;
       await navigator.clipboard.writeText(url);
+      const orig = btn.textContent;
       btn.textContent = 'Copied!';
       btn.classList.add('copied');
       setTimeout(() => {
-        btn.textContent = 'Copy';
+        btn.textContent = orig;
         btn.classList.remove('copied');
       }, 2000);
     }
 
-    // ── Init ───────────────────────────────────────────────────────────────────
+    async function renameSession(sessionId, el) {
+      const nameEl = el.classList.contains('session-name') ? el : el.closest('.session-row').querySelector('.session-name');
+      const newName = prompt('New name:', nameEl.textContent);
+      if (!newName || !newName.trim()) return;
 
-    // Library add zone
-    setupDropZone(
-      document.getElementById('library-add-zone'),
-      document.getElementById('library-input'),
-      files => {
-        files.filter(f => f.type.startsWith('video/')).forEach(f => uploadToLibrary(f));
+      await fetch(`/api/sessions/${sessionId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName.trim() })
+      });
+      nameEl.textContent = newName.trim();
+    }
+
+    async function deleteSession(sessionId, btn) {
+      if (!confirm('Delete this test and all its data?')) return;
+
+      const row = btn.closest('.session-row');
+      row.style.opacity = '0.3';
+
+      await fetch(`/api/sessions/${sessionId}`, { method: 'DELETE' });
+      row.remove();
+
+      if (!document.querySelector('.session-row')) {
+        document.getElementById('session-list').innerHTML =
+          '<div class="empty-state">No tests yet — click "+ New Test" to get started</div>';
       }
-    );
+    }
 
-    // Test video drop zone
-    setupDropZone(
-      document.getElementById('test-drop'),
-      document.getElementById('test-input'),
-      files => {
-        const video = files.find(f => f.type.startsWith('video/'));
-        if (video) uploadTestVideo(video);
-      }
-    );
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
-    document.getElementById('session-name').addEventListener('keydown', e => {
-      if (e.key === 'Enter') saveName();
+    function escHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+
+    document.getElementById('new-name').addEventListener('keydown', e => {
+      if (e.key === 'Enter') createTest();
     });
+
+    loadSessions();
   </script>
 </body>
 </html>

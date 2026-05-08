@@ -45,11 +45,56 @@ app.get('/api/config', (req, res) => {
 
 // ── Sessions ──────────────────────────────────────────────────────────────────
 
+app.get('/api/sessions', (req, res) => {
+  const sessions = db.prepare(`
+    SELECT s.*,
+      (SELECT COUNT(*) FROM videos WHERE session_id = s.id) +
+      (SELECT COUNT(*) FROM session_library_videos WHERE session_id = s.id) as video_count,
+      (SELECT COUNT(DISTINCT viewer_id) FROM watch_events WHERE session_id = s.id) as viewer_count
+    FROM sessions s
+    ORDER BY s.created_at DESC
+  `).all();
+  res.json(sessions);
+});
+
 app.post('/api/sessions', (req, res) => {
   const id = uuidv4().slice(0, 8);
   const { name } = req.body;
   db.prepare('INSERT INTO sessions (id, name) VALUES (?, ?)').run(id, name || 'Untitled Test');
   res.json({ id });
+});
+
+app.put('/api/sessions/:id', (req, res) => {
+  const { name } = req.body;
+  if (!name) return res.status(400).json({ error: 'Name is required' });
+  const session = db.prepare('SELECT id FROM sessions WHERE id = ?').get(req.params.id);
+  if (!session) return res.status(404).json({ error: 'Session not found' });
+  db.prepare('UPDATE sessions SET name = ? WHERE id = ?').run(name, req.params.id);
+  res.json({ ok: true });
+});
+
+app.delete('/api/sessions/:id', async (req, res) => {
+  try {
+    const session = db.prepare('SELECT id FROM sessions WHERE id = ?').get(req.params.id);
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+
+    // Delete video files from R2/disk
+    const videos = db.prepare('SELECT filename FROM videos WHERE session_id = ?').all(req.params.id);
+    for (const v of videos) {
+      if (useR2) {
+        await r2.deleteFile(v.filename).catch(() => {});
+      } else {
+        const filePath = path.join(uploadsDir, v.filename);
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      }
+    }
+
+    // Cascade deletes handle videos, watch_events, session_library_videos
+    db.prepare('DELETE FROM sessions WHERE id = ?').run(req.params.id);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.get('/api/sessions/:id', (req, res) => {
