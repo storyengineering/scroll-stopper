@@ -276,7 +276,10 @@ app.post('/api/sessions/:id/events', (req, res) => {
 const audioUpload = multer({
   storage: useR2 ? multer.memoryStorage() : multer.diskStorage({
     destination: uploadsDir,
-    filename: (req, file, cb) => cb(null, `${uuidv4()}.webm`)
+    filename: (req, file, cb) => {
+      const ext = file.originalname.endsWith('.mp4') ? '.mp4' : '.webm';
+      cb(null, `${uuidv4()}${ext}`);
+    }
   }),
   limits: { fileSize: 50 * 1024 * 1024 },
 });
@@ -288,7 +291,8 @@ app.post('/api/sessions/:id/feedback', audioUpload.single('audio'), async (req, 
     const session = db.prepare('SELECT id FROM sessions WHERE id = ?').get(id);
     if (!session) return res.status(404).json({ error: 'Session not found' });
 
-    const filename = useR2 ? `feedback-${uuidv4()}.webm` : req.file.filename;
+    const ext = req.file.originalname.endsWith('.mp4') ? '.mp4' : '.webm';
+    const filename = useR2 ? `feedback-${uuidv4()}${ext}` : req.file.filename;
 
     if (useR2) {
       await r2.uploadFile(filename, req.file.buffer, req.file.mimetype || 'audio/webm');

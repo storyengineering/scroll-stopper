@@ -928,7 +928,9 @@
           analyser.fftSize = 2048;
           source.connect(analyser);
 
-          mediaRecorder = new MediaRecorder(stream);
+          const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm'
+            : MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : '';
+          mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
           audioChunks = [];
 
           mediaRecorder.addEventListener('dataavailable', e => {
@@ -1006,7 +1008,7 @@
       document.getElementById('waveform-wrap').style.display = 'none';
       document.getElementById('skip-btn').style.display = 'none';
 
-      const blob = new Blob(audioChunks, { type: 'audio/webm' });
+      const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
       const reviewAudio = document.getElementById('review-audio');
       reviewAudio.src = URL.createObjectURL(blob);
       reviewAudio.ontimeupdate = updatePlayerProgress;
@@ -1036,9 +1038,10 @@
     async function uploadFeedback() {
       const status = document.getElementById('rec-status');
       try {
-        const blob = new Blob(audioChunks, { type: 'audio/webm' });
+        const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
         const formData = new FormData();
-        formData.append('audio', blob, 'feedback.webm');
+        const ext = mediaRecorder.mimeType && mediaRecorder.mimeType.includes('mp4') ? 'mp4' : 'webm';
+        formData.append('audio', blob, `feedback.${ext}`);
         formData.append('viewer_id', viewerId);
 
         const res = await fetch(`/api/sessions/${sessionId}/feedback`, {
