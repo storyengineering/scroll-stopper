@@ -761,7 +761,13 @@
     // ── Links ──────────────────────────────────────────────────────────────────
 
     function updateLinks() {
-      const base = location.origin;
+      let base = location.origin;
+      if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+        try {
+          const cfg = await fetch('/api/config').then(r => r.json());
+          if (cfg.localIp) base = base.replace(location.hostname, cfg.localIp);
+        } catch {}
+      }
       const feedLink = `${base}/feed.html?session=${sessionId}`;
       const resultsLink = `${base}/results.html?session=${sessionId}`;
       const feedEl = document.getElementById('feed-url');

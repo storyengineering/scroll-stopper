@@ -53,6 +53,15 @@ db.exec(`
     FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE,
     FOREIGN KEY (library_video_id) REFERENCES library_videos(id) ON DELETE CASCADE
   );
+
+  CREATE TABLE IF NOT EXISTS feedback (
+    id TEXT PRIMARY KEY,
+    session_id TEXT NOT NULL,
+    viewer_id TEXT NOT NULL,
+    filename TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
+  );
 `);
 
 module.exports = db;

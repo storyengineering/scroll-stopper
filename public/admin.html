@@ -375,8 +375,18 @@
 
     // ── Actions ───────────────────────────────────────────────────────────────
 
+    let cachedLocalIp = null;
+
     async function copyLink(btn, type, sessionId) {
-      const base = location.origin;
+      let base = location.origin;
+      // On localhost, swap in local IP so links work on phone
+      if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+        if (!cachedLocalIp) {
+          const cfg = await fetch('/api/config').then(r => r.json());
+          cachedLocalIp = cfg.localIp;
+        }
+        if (cachedLocalIp) base = base.replace(location.hostname, cachedLocalIp);
+      }
       const page = type === 'feed' ? 'feed.html' : 'results.html';
       const url = `${base}/${page}?session=${sessionId}`;
       await navigator.clipboard.writeText(url);

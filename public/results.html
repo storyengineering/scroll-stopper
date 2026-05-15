@@ -485,6 +485,44 @@
         [...benchmarks].sort((a, b) => b.avg_watch_seconds - a.avg_watch_seconds)
           .forEach(v => content.appendChild(buildCard(v, false)));
       }
+
+      // ── Feedback ──────────────────────────────────────────────────────────
+      loadFeedback(content);
+    }
+
+    async function loadFeedback(container) {
+      try {
+        const res = await fetch(`/api/sessions/${sessionId}/feedback`);
+        const feedback = await res.json();
+        if (!feedback.length) return;
+
+        const configRes = await fetch('/api/config');
+        const config = await configRes.json();
+        const baseUrl = config.videoBaseUrl;
+
+        const label = document.createElement('div');
+        label.className = 'section-label';
+        label.textContent = `Viewer Feedback (${feedback.length})`;
+        container.appendChild(label);
+
+        feedback.forEach(fb => {
+          const card = document.createElement('div');
+          card.className = 'video-card';
+          const date = new Date(fb.created_at).toLocaleDateString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric',
+            hour: 'numeric', minute: '2-digit'
+          });
+          const audioSrc = `${baseUrl}/${fb.filename}`;
+          card.innerHTML = `
+            <div class="video-card-top">
+              <div class="video-name">Viewer ${fb.viewer_id.slice(0, 6)}</div>
+              <span class="bench-badge">${date}</span>
+            </div>
+            <audio controls src="${audioSrc}" style="width:100%;margin-top:8px;height:36px"></audio>
+          `;
+          container.appendChild(card);
+        });
+      } catch {}
     }
 
     function buildCard(video, isTest) {

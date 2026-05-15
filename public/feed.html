@@ -323,7 +323,7 @@
     #error h2 { font-size: 20px; }
     #error p { color: #666; font-size: 14px; }
 
-    /* ── "No more videos" end card ── */
+    /* ── Feedback end card ── */
     .end-card {
       height: 100dvh;
       height: 100vh;
@@ -332,12 +332,176 @@
       align-items: center;
       justify-content: center;
       scroll-snap-align: start;
-      gap: 12px;
+      gap: 16px;
+      padding: 32px 24px;
     }
 
     .end-card .icon { font-size: 40px; }
     .end-card h2 { font-size: 20px; font-weight: 700; }
-    .end-card p { font-size: 14px; color: #666; text-align: center; max-width: 260px; line-height: 1.5; }
+    .end-card p { font-size: 14px; color: #999; text-align: center; max-width: 280px; line-height: 1.6; }
+
+    .feedback-thumb {
+      width: 240px;
+      height: 135px;
+      object-fit: cover;
+      border: 1px solid #333;
+      background: #111;
+      margin-bottom: 8px;
+    }
+
+    .feedback-label {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #666;
+    }
+
+    .record-btn {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 3px solid #ef4444;
+      background: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+
+    .record-btn .rec-dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #ef4444;
+      transition: border-radius 0.2s, width 0.2s, height 0.2s;
+    }
+
+    .record-btn.recording .rec-dot {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+    }
+
+    .waveform-wrap {
+      width: 240px;
+      height: 48px;
+      display: none;
+    }
+
+    .waveform-wrap canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    .record-timer {
+      font-size: 18px;
+      font-weight: 700;
+      color: #ef4444;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .skip-btn {
+      background: none;
+      border: none;
+      color: #555;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+
+    .skip-btn:hover { color: #888; }
+
+    /* ── Custom audio player ── */
+    .custom-player {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0;
+      width: 260px;
+      margin-bottom: 12px;
+    }
+
+    .play-pause-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: none;
+      background: #ef4444;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .player-progress {
+      flex: 1;
+      height: 3px;
+      background: #333;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .player-fill {
+      height: 100%;
+      background: #ef4444;
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+
+    .player-time {
+      font-size: 11px;
+      color: #666;
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
+    }
+
+    .review-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .review-btn {
+      background: none;
+      border: 1px solid #333;
+      color: #aaa;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .review-btn:hover { border-color: #666; color: #fff; }
+
+    .review-btn.submit {
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+
+    .review-btn.submit:hover {
+      background: #ef4444;
+      color: #fff;
+    }
+
+    .feedback-status {
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
   </style>
 </head>
 <body>
@@ -556,15 +720,54 @@
         feed.appendChild(item);
       });
 
-      // End card
+      // Feedback end card
+      const testVideo = videos.find(v => v.is_test_video);
       const end = document.createElement('div');
       end.className = 'end-card';
+
+      const thumbSrc = testVideo ? `${videoBaseUrl}/${testVideo.filename}` : '';
+      const thumbHtml = testVideo
+        ? `<video class="feedback-thumb" src="${thumbSrc}" preload="metadata" muted playsinline></video>`
+        : '';
+
       end.innerHTML = `
-        <div class="icon">🎬</div>
-        <h2>That's all of them</h2>
-        <p>Thanks for watching. Your attention data has been recorded.</p>
+        ${thumbHtml}
+        <h2>What did you think?</h2>
+        <p>Tap record and share your quick thoughts on the video above. What grabbed you? What didn't?</p>
+        <div class="waveform-wrap" id="waveform-wrap" style="margin-top:12px">
+          <canvas id="waveform" width="480" height="96"></canvas>
+        </div>
+        <div class="record-timer" id="rec-timer" style="display:none">0:00</div>
+        <div style="margin-top:4px"></div>
+        <button class="record-btn" id="rec-btn" onclick="toggleRecording()">
+          <div class="rec-dot"></div>
+        </button>
+        <div style="margin-top:4px"></div>
+        <div class="feedback-label" id="rec-label">TAP TO RECORD</div>
+        <div id="review-controls" style="display:none">
+          <div class="custom-player" id="custom-player">
+            <button class="play-pause-btn" id="pp-btn" onclick="togglePlayback()">▶</button>
+            <div class="player-progress" id="player-track" onclick="seekAudio(event)">
+              <div class="player-fill" id="player-fill"></div>
+            </div>
+            <span class="player-time" id="player-time">0:00</span>
+          </div>
+          <audio id="review-audio"></audio>
+          <div class="review-actions">
+            <button class="review-btn" onclick="reRecord()">Re-record</button>
+            <button class="review-btn submit" onclick="submitFeedback()">Submit</button>
+          </div>
+        </div>
+        <div class="feedback-status" id="rec-status" style="display:none"></div>
+        <button class="skip-btn" id="skip-btn" onclick="skipFeedback()">Skip</button>
       `;
       feed.appendChild(end);
+
+      // Seek thumbnail to 0.5s to get a frame
+      const thumbEl = end.querySelector('.feedback-thumb');
+      if (thumbEl) {
+        thumbEl.addEventListener('loadedmetadata', () => { thumbEl.currentTime = 0.5; });
+      }
     }
 
     // ── Intersection Observer ────────────────────────────────────────────────
@@ -663,6 +866,209 @@
       document.getElementById('tap-overlay').style.display = 'none';
       document.getElementById('error-msg').textContent = msg;
       document.getElementById('error').style.display = 'flex';
+    }
+
+    // ── Feedback recorder ───────────────────────────────────────────────────
+
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let recInterval = null;
+    let recStartTime = 0;
+    let analyser = null;
+    let animFrame = null;
+
+    function drawWaveform() {
+      const canvas = document.getElementById('waveform');
+      const ctx = canvas.getContext('2d');
+      const bufferLength = analyser.frequencyBinCount;
+      const data = new Uint8Array(bufferLength);
+      const barCount = 40;
+      const barWidth = Math.floor(canvas.width / barCount) - 2;
+      const gap = 2;
+
+      function draw() {
+        animFrame = requestAnimationFrame(draw);
+        analyser.getByteFrequencyData(data);
+
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const step = Math.floor(bufferLength / barCount);
+        for (let i = 0; i < barCount; i++) {
+          let sum = 0;
+          for (let j = 0; j < step; j++) {
+            sum += data[i * step + j];
+          }
+          const avg = sum / step;
+          const barHeight = Math.max(2, (avg / 255) * canvas.height * 0.9);
+          const x = i * (barWidth + gap);
+          const y = (canvas.height - barHeight) / 2;
+
+          ctx.fillStyle = '#ef4444';
+          ctx.fillRect(x, y, barWidth, barHeight);
+        }
+      }
+      draw();
+    }
+
+    async function toggleRecording() {
+      const btn = document.getElementById('rec-btn');
+      const timer = document.getElementById('rec-timer');
+      const label = document.getElementById('rec-label');
+      const status = document.getElementById('rec-status');
+      const waveWrap = document.getElementById('waveform-wrap');
+
+      if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          const source = audioCtx.createMediaStreamSource(stream);
+          analyser = audioCtx.createAnalyser();
+          analyser.fftSize = 2048;
+          source.connect(analyser);
+
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+
+          mediaRecorder.addEventListener('dataavailable', e => {
+            if (e.data.size > 0) audioChunks.push(e.data);
+          });
+
+          mediaRecorder.addEventListener('stop', () => {
+            stream.getTracks().forEach(t => t.stop());
+            clearInterval(recInterval);
+            cancelAnimationFrame(animFrame);
+            audioCtx.close();
+            showReview();
+          });
+
+          mediaRecorder.start();
+          btn.classList.add('recording');
+          label.textContent = 'TAP TO STOP';
+          timer.style.display = 'block';
+          waveWrap.style.display = 'block';
+          drawWaveform();
+
+          recStartTime = Date.now();
+          recInterval = setInterval(() => {
+            const secs = Math.floor((Date.now() - recStartTime) / 1000);
+            const m = Math.floor(secs / 60);
+            const s = secs % 60;
+            timer.textContent = `${m}:${String(s).padStart(2, '0')}`;
+          }, 200);
+        } catch (err) {
+          status.style.display = 'block';
+          status.textContent = 'Microphone access denied';
+          status.style.color = '#ef4444';
+        }
+      } else {
+        mediaRecorder.stop();
+      }
+    }
+
+    // ── Custom audio player ────────────────────────────────────────────────
+
+    function togglePlayback() {
+      const audio = document.getElementById('review-audio');
+      const btn = document.getElementById('pp-btn');
+      if (audio.paused) {
+        audio.play();
+        btn.textContent = '■';
+      } else {
+        audio.pause();
+        btn.textContent = '▶';
+      }
+    }
+
+    function seekAudio(e) {
+      const audio = document.getElementById('review-audio');
+      const track = document.getElementById('player-track');
+      const pct = e.offsetX / track.offsetWidth;
+      audio.currentTime = pct * audio.duration;
+    }
+
+    function updatePlayerProgress() {
+      const audio = document.getElementById('review-audio');
+      if (!audio || !audio.duration) return;
+      const pct = (audio.currentTime / audio.duration) * 100;
+      document.getElementById('player-fill').style.width = pct + '%';
+      const secs = Math.floor(audio.currentTime);
+      const m = Math.floor(secs / 60);
+      const s = secs % 60;
+      document.getElementById('player-time').textContent = `${m}:${String(s).padStart(2, '0')}`;
+    }
+
+    function showReview() {
+      document.getElementById('rec-btn').style.display = 'none';
+      document.getElementById('rec-label').style.display = 'none';
+      document.getElementById('rec-timer').style.display = 'none';
+      document.getElementById('waveform-wrap').style.display = 'none';
+      document.getElementById('skip-btn').style.display = 'none';
+
+      const blob = new Blob(audioChunks, { type: 'audio/webm' });
+      const reviewAudio = document.getElementById('review-audio');
+      reviewAudio.src = URL.createObjectURL(blob);
+      reviewAudio.ontimeupdate = updatePlayerProgress;
+      reviewAudio.onended = () => { document.getElementById('pp-btn').textContent = '▶'; };
+      document.getElementById('review-controls').style.display = 'block';
+    }
+
+    function reRecord() {
+      document.getElementById('review-controls').style.display = 'none';
+      document.getElementById('rec-btn').style.display = 'flex';
+      document.getElementById('rec-btn').classList.remove('recording');
+      document.getElementById('rec-label').style.display = 'block';
+      document.getElementById('rec-label').textContent = 'TAP TO RECORD';
+      document.getElementById('skip-btn').style.display = 'block';
+      mediaRecorder = null;
+      audioChunks = [];
+    }
+
+    async function submitFeedback() {
+      document.getElementById('review-controls').style.display = 'none';
+      const status = document.getElementById('rec-status');
+      status.style.display = 'block';
+      status.textContent = 'Uploading...';
+      await uploadFeedback();
+    }
+
+    async function uploadFeedback() {
+      const status = document.getElementById('rec-status');
+      try {
+        const blob = new Blob(audioChunks, { type: 'audio/webm' });
+        const formData = new FormData();
+        formData.append('audio', blob, 'feedback.webm');
+        formData.append('viewer_id', viewerId);
+
+        const res = await fetch(`/api/sessions/${sessionId}/feedback`, {
+          method: 'POST',
+          body: formData
+        });
+
+        if (res.ok) {
+          showThanks();
+        } else {
+          status.textContent = 'Upload failed. Try again.';
+          status.style.color = '#ef4444';
+        }
+      } catch {
+        status.textContent = 'Upload failed. Try again.';
+        status.style.color = '#ef4444';
+      }
+    }
+
+    function skipFeedback() {
+      showThanks();
+    }
+
+    function showThanks() {
+      const endCard = document.querySelector('.end-card');
+      endCard.innerHTML = `
+        <img src="/favicon.svg" alt="" style="width:48px;height:48px;margin-bottom:8px">
+        <h2>Thanks for your time</h2>
+        <p>Your feedback has been recorded. You can close this page now.</p>
+      `;
     }
   </script>
 </body>

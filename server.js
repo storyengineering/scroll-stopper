@@ -57,9 +57,20 @@ app.get('/feed.html', (req, res) => {
 app.use(express.static(path.join(__dirname, 'public')));
 if (!useR2) app.use('/uploads', express.static(uploadsDir));
 
-// Expose R2 public URL to frontend
+// Expose config to frontend
 app.get('/api/config', (req, res) => {
-  res.json({ videoBaseUrl: useR2 ? process.env.R2_PUBLIC_URL : '/uploads' });
+  const os = require('os');
+  let localIp = null;
+  if (!useR2) {
+    const nets = os.networkInterfaces();
+    for (const iface of Object.values(nets)) {
+      for (const net of iface) {
+        if (net.family === 'IPv4' && !net.internal) { localIp = net.address; break; }
+      }
+      if (localIp) break;
+    }
+  }
+  res.json({ videoBaseUrl: useR2 ? process.env.R2_PUBLIC_URL : '/uploads', localIp });
 });
 
 // ── Sessions ──────────────────────────────────────────────────────────────────
@@ -258,6 +269,44 @@ app.post('/api/sessions/:id/events', (req, res) => {
   }
 
   res.json({ ok: true });
+});
+
+// ── Feedback ─────────────────────────────────────────────────────────────────
+
+const audioUpload = multer({
+  storage: useR2 ? multer.memoryStorage() : multer.diskStorage({
+    destination: uploadsDir,
+    filename: (req, file, cb) => cb(null, `${uuidv4()}.webm`)
+  }),
+  limits: { fileSize: 50 * 1024 * 1024 },
+});
+
+app.post('/api/sessions/:id/feedback', audioUpload.single('audio'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { viewer_id } = req.body;
+    const session = db.prepare('SELECT id FROM sessions WHERE id = ?').get(id);
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+
+    const filename = useR2 ? `feedback-${uuidv4()}.webm` : req.file.filename;
+
+    if (useR2) {
+      await r2.uploadFile(filename, req.file.buffer, req.file.mimetype || 'audio/webm');
+    }
+
+    const feedbackId = uuidv4();
+    db.prepare('INSERT INTO feedback (id, session_id, viewer_id, filename) VALUES (?, ?, ?, ?)')
+      .run(feedbackId, id, viewer_id || 'unknown', filename);
+
+    res.json({ id: feedbackId, filename });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/sessions/:id/feedback', (req, res) => {
+  const feedback = db.prepare('SELECT * FROM feedback WHERE session_id = ? ORDER BY created_at DESC').all(req.params.id);
+  res.json(feedback);
 });
 
 // ── Results ───────────────────────────────────────────────────────────────────
