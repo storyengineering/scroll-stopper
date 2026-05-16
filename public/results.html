@@ -345,6 +345,31 @@
       0%, 100% { opacity: 1; }
       50% { opacity: 0.3; }
     }
+
+    /* ── Metric toggle ── */
+    .metric-toggle {
+      max-width: 640px;
+      margin: 0 auto 12px;
+      display: flex;
+      gap: 4px;
+    }
+
+    .metric-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: var(--font);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .metric-btn:hover { color: var(--text); border-color: var(--muted); }
+    .metric-btn.active { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
   </style>
 </head>
 <body>
@@ -372,6 +397,8 @@
   <script>
     const sessionId = new URLSearchParams(location.search).get('session');
     let maxAvg = 0;
+    let currentMetric = 'avg'; // 'avg' or 'median'
+    let lastData = null;
 
     async function load() {
       document.getElementById('loading').style.display = 'block';
@@ -382,6 +409,7 @@
         const res = await fetch(`/api/sessions/${sessionId}/results`);
         if (!res.ok) throw new Error('Not found');
         const data = await res.json();
+        lastData = data;
         render(data);
       } catch (e) {
         document.getElementById('loading').style.display = 'none';
@@ -403,18 +431,31 @@
       const totalViewers = new Set(results.flatMap(v => v.watch_times.map((_, i) => i))).size;
       const totalUniqueViewers = results.reduce((max, v) => Math.max(max, v.viewer_count), 0);
 
+      const isMedian = currentMetric === 'median';
+      const metricKey = isMedian ? 'median_watch_seconds' : 'avg_watch_seconds';
+      const metricLabel = isMedian ? 'Median' : 'Avg';
+
       const benchAvg = benchmarks.length
-        ? benchmarks.reduce((s, v) => s + v.avg_watch_seconds, 0) / benchmarks.length
+        ? benchmarks.reduce((s, v) => s + v[metricKey], 0) / benchmarks.length
         : 0;
 
-      const testAvg = testVideos.length ? testVideos[0].avg_watch_seconds : null;
+      const testAvg = testVideos.length ? testVideos[0][metricKey] : null;
 
       // Max bar width reference
-      maxAvg = Math.max(...results.map(v => v.avg_watch_seconds), 0.1);
+      maxAvg = Math.max(...results.map(v => v[metricKey]), 0.1);
 
       const content = document.getElementById('content');
       content.innerHTML = '';
       content.style.display = 'block';
+
+      // ── Metric toggle ────────────────────────────────────────────────────────
+      const toggle = document.createElement('div');
+      toggle.className = 'metric-toggle';
+      toggle.innerHTML = `
+        <button class="metric-btn ${currentMetric === 'avg' ? 'active' : ''}" onclick="setMetric('avg')">Average</button>
+        <button class="metric-btn ${currentMetric === 'median' ? 'active' : ''}" onclick="setMetric('median')">Median</button>
+      `;
+      content.appendChild(toggle);
 
       // ── Summary banner ──────────────────────────────────────────────────────
       const banner = document.createElement('div');
@@ -430,12 +471,12 @@
         </div>
         <div class="stat">
           <div class="val">${benchAvg.toFixed(1)}s</div>
-          <div class="label">Bench Avg</div>
+          <div class="label">Bench ${metricLabel}</div>
         </div>
         ${testAvg !== null ? `
         <div class="stat accent">
           <div class="val">${testAvg.toFixed(1)}s</div>
-          <div class="label">Your Video Avg</div>
+          <div class="label">Your Video ${metricLabel}</div>
         </div>` : ''}
       `;
       content.appendChild(banner);
@@ -448,13 +489,13 @@
 
         if (diff >= 0) {
           verdict.className = 'verdict pass';
-          verdict.textContent = `Your hook is holding attention ${pct}% longer than the benchmark average. Solid.`;
+          verdict.textContent = `Your hook is holding attention ${pct}% longer than the benchmark ${metricLabel.toLowerCase()}. Solid.`;
         } else if (pct <= 20) {
           verdict.className = 'verdict neutral';
-          verdict.textContent = `Your hook is within ${pct}% of the benchmark average. Close — worth iterating.`;
+          verdict.textContent = `Your hook is within ${pct}% of the benchmark ${metricLabel.toLowerCase()}. Close — worth iterating.`;
         } else {
           verdict.className = 'verdict fail';
-          verdict.textContent = `Viewers scroll past your video ${pct}% faster than benchmarks. The hook needs work.`;
+          verdict.textContent = `Viewers scroll past your video ${pct}% faster than benchmarks (by ${metricLabel.toLowerCase()}). The hook needs work.`;
         }
         content.appendChild(verdict);
       } else if (testAvg !== null && benchAvg === 0) {
@@ -481,8 +522,8 @@
         label.textContent = `Benchmarks (${benchmarks.length})`;
         content.appendChild(label);
 
-        // Sort by avg watch desc
-        [...benchmarks].sort((a, b) => b.avg_watch_seconds - a.avg_watch_seconds)
+        // Sort by current metric desc
+        [...benchmarks].sort((a, b) => b[metricKey] - a[metricKey])
           .forEach(v => content.appendChild(buildCard(v, false)));
       }
 
@@ -530,7 +571,10 @@
       card.className = `video-card${isTest ? ' is-test' : ''}`;
 
       const name = video.original_name || video.filename;
-      const pct = maxAvg > 0 ? Math.round((video.avg_watch_seconds / maxAvg) * 100) : 0;
+      const isMedian = currentMetric === 'median';
+      const metricVal = isMedian ? video.median_watch_seconds : video.avg_watch_seconds;
+      const metricLabel = isMedian ? 'Median watch' : 'Avg watch';
+      const pct = maxAvg > 0 ? Math.round((metricVal / maxAvg) * 100) : 0;
 
       // Dot colors scale by watch time
       const dotColor = isTest ? '#e91e8c' : '#444';
@@ -550,8 +594,8 @@
         </div>
         <div class="video-stats">
           <div class="v-stat">
-            <div class="val">${video.avg_watch_seconds || 0}s</div>
-            <div class="label">Avg watch</div>
+            <div class="val">${metricVal || 0}s</div>
+            <div class="label">${metricLabel}</div>
           </div>
           <div class="v-stat">
             <div class="val">${video.max_watch_seconds || 0}s</div>
@@ -577,6 +621,11 @@
 
     function escHtml(str) {
       return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function setMetric(metric) {
+      currentMetric = metric;
+      if (lastData) render(lastData);
     }
 
     if (sessionId) load();

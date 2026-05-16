@@ -334,12 +334,19 @@ app.get('/api/sessions/:id/results', (req, res) => {
     const avgWatch = viewerCount > 0
       ? events.reduce((s, e) => s + e.watch_seconds, 0) / viewerCount
       : 0;
-    const maxWatch = viewerCount > 0 ? Math.max(...events.map(e => e.watch_seconds)) : 0;
+    const sorted = events.map(e => e.watch_seconds).sort((a, b) => a - b);
+    const medianWatch = viewerCount > 0
+      ? viewerCount % 2 === 1
+        ? sorted[Math.floor(viewerCount / 2)]
+        : (sorted[viewerCount / 2 - 1] + sorted[viewerCount / 2]) / 2
+      : 0;
+    const maxWatch = viewerCount > 0 ? Math.max(...sorted) : 0;
 
     return {
       ...video,
       viewer_count: viewerCount,
       avg_watch_seconds: Math.round(avgWatch * 10) / 10,
+      median_watch_seconds: Math.round(medianWatch * 10) / 10,
       max_watch_seconds: Math.round(maxWatch * 10) / 10,
       watch_times: events.map(e => Math.round(e.watch_seconds * 10) / 10)
     };
